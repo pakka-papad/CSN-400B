@@ -88,42 +88,15 @@ vector<pair<Point2d,Point2d>> generatePairs2d(
            
             result.push_back({i,j});
             
-            for(auto axis: S) {
-                auto ref = axis.reflect(j);
-                if (ref == nullptr) {
-                    continue;
-                }
-                L2.erase(*ref);
-            }
-            if (S.size() > 1) {
-                auto r1 = S[0].reflect(j);
-                assert(r1 != nullptr);
-                for(int k = 1; k < S.size(); k++) {
-                    auto r2 = S[k].reflect(*r1);
-                    if(r2 == nullptr) {
-                        continue;
-                    }
-                    L2.erase(*r2);
-                }
+            auto jrefs = generateAllReflections2d(S, j);
+            for(auto jref: jrefs) {
+                L2.erase(jref);
             }
         }
-        for(auto axis: axes) {
-            auto ref = axis.reflect(i);
-            if (ref == nullptr) {
-                continue;
-            }
-            L1.erase(*ref);
-        }
-        if (axes.size() > 1) {
-            auto r1 = axes[0].reflect(i);
-            assert(r1 != nullptr);
-            for(int k = 1; k < axes.size(); k++) {
-                auto r2 = axes[k].reflect(*r1);
-                if(r2 == nullptr) {
-                    continue;
-                }
-                L1.erase(*r2);
-            }
+        
+        auto irefs = generateAllReflections2d(axes, i);
+        for(auto iref: irefs) {
+            L1.erase(iref);
         }
     }
     return result;
@@ -230,37 +203,6 @@ vector<pair<Point3d,Point3d>> generatePairs3d(
     vector<pair<Point3d,Point3d>> result;
     set<Point3d> L1(points.begin(), points.end());
     vector<Plane3d> S;
-    auto generateAllReflections = [](const vector<Plane3d> &planes, const Point3d &p) -> vector<Point3d> {
-        map<Point3d,int> mp;
-        mp[p] = 0;
-        queue<Point3d> q;
-        vector<Point3d> res;
-        q.push(p);
-        while(!q.empty()) {
-            auto pt = q.front();
-            q.pop();
-            for(auto plane: planes) {
-                auto ref = plane.reflect(pt);
-                if(ref == nullptr) continue;
-                auto refp = *ref;
-                if(mp.find(refp) == mp.end()) {
-                    mp[refp] = mp[pt] + 1;
-                    if(mp[refp] < 3) {
-                        q.push(refp);
-                    }
-                    res.push_back(refp);
-                }
-            }
-        }
-        cerr << " \n";
-        cerr << "Point: (" << p.x << "," << p.y << "," << p.z << ")\n";
-        cerr << "Reflection: (" << res.size() << ")\n";
-        for(auto a: res) {
-            cerr << "(" << a.x << "," << a.y << "," << a.z << ") ";
-        }
-        cerr << " \n";
-        return res;
-    };
     while(L1.size() > 1) {
         auto const i = *L1.begin();
         L1.erase(i);
@@ -277,12 +219,12 @@ vector<pair<Point3d,Point3d>> generatePairs3d(
             L2.erase(j);
             result.push_back({i,j});
             
-            auto refs = generateAllReflections(S, j);
+            auto refs = generateAllReflections3d(S, j);
             for(auto ref: refs) {
                 L2.erase(ref);
             }
         }
-        auto refs = generateAllReflections(axes, i);
+        auto refs = generateAllReflections3d(axes, i);
         for(auto ref: refs) {
             L1.erase(ref);
         }
