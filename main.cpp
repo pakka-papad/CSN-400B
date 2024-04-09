@@ -14,11 +14,11 @@ void print(const vector<pair<Point2d,Point2d>> &v){
 	cout << "\n\n";
 }
 
-void print(const tuple<Point2d,Point2d,Point2d,Point2d> &l){
-	cout << "[{" << get<0>(l).x << "," << get<0>(l).y << "} {" << get<1>(l).x << "," << get<1>(l).y << "} {" << get<2>(l).x << "," << get<2>(l).y << "} {" << get<3>(l).x << "," << get<3>(l).y << "}] ";
+void print(const tuple<Point2d,Point2d,Point2d> &l){
+	cout << "[{" << get<0>(l).x << "," << get<0>(l).y << "} {" << get<1>(l).x << "," << get<1>(l).y << "} {" << get<2>(l).x << "," << get<2>(l).y << "}] ";
 }
 
-void print(const vector<tuple<Point2d,Point2d,Point2d,Point2d>> &v){
+void print(const vector<tuple<Point2d,Point2d,Point2d>> &v){
 	for(auto &x: v) print(x);
 	cout << "\n\n";
 }
@@ -40,7 +40,7 @@ int main() {
 
     int a, b;
     cin >> a >> b;
-    auto res = generate4Tuples(a,b);
+    auto res = generate3Tuples(a,b);
     print(res);
     return 0;
 }
