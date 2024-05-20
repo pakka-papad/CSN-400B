@@ -212,6 +212,115 @@ vector<tuple<Point2d,Point2d,Point2d>> generate3Tuple2d(
     return result;
 }
 
+vector<tuple<Point3d,Point3d,Point3d>> generate3Tuple3d(
+    const vector<Point3d> &points,
+    const vector<Plane3d> &axes
+){
+    vector<tuple<Point3d,Point3d,Point3d>> result;
+    set<Point3d> L1(points.begin(), points.end());
+    vector<Plane3d> S1, S2;
+    set<tuple<Point3d,Point3d,Point3d>> blacklist;
+
+    auto isSelfReflection = [](const Plane3d &axis, const set<Point3d> &s) -> bool {
+        set<Point3d> r;
+        for(auto &p: s) {
+            auto ref = axis.reflect(p);
+            if(ref != NULL) {
+                r.insert(*ref);
+            }
+        }
+        return (s == r);
+    };
+
+    auto blacklistAllTupleRefs = [&axes, &blacklist](const tuple<Point3d,Point3d,Point3d> &t) {
+        blacklist.insert(t);
+        map<tuple<Point3d,Point3d,Point3d>,int> mp;
+        mp[t] = 0;
+        queue<tuple<Point3d,Point3d,Point3d>> q;
+        q.push(t);
+        while(!q.empty()) {
+            auto pt = q.front();
+            q.pop();
+            for(auto axis: axes) {
+                auto ref1 = axis.reflect(get<0>(pt));
+                auto ref2 = axis.reflect(get<1>(pt));
+                auto ref3 = axis.reflect(get<2>(pt));
+                if(ref1 == nullptr) continue;
+                if(ref2 == nullptr) continue;
+                if(ref3 == nullptr) continue;
+                vector<Point3d> refp = {*ref1,*ref2,*ref3};
+                sort(refp.begin(), refp.end());
+                tuple<Point3d,Point3d,Point3d> tp = {refp[0], refp[1], refp[2]};
+                if(mp.find(tp) == mp.end()) {
+                    mp[tp] = mp[pt] + 1;
+                    if(mp[tp] < 3) {
+                        q.push(tp);
+                    }
+                    blacklist.insert(tp);
+                }
+            }
+        }
+    };
+
+    while(!L1.empty()) {
+        auto const i = *L1.begin();
+        L1.erase(i);
+        
+        S1.clear();
+        for(auto axis: axes) {
+            if (!axis.containsPoint(i)) {
+                continue;
+            }
+            S1.push_back(axis);
+        }
+        
+        auto L2 = L1;
+        
+        while(!L2.empty()) {
+            auto const j = *L2.begin();
+            L2.erase(j);
+        
+            S2.clear();
+            set<Point3d> x1 = {i,j};
+            for(auto axis: axes) {
+                if(isSelfReflection(axis, x1)) {
+                    S2.push_back(axis);
+                }
+            }
+
+            auto L3 = L2;
+
+            while(!L3.empty()) {
+                auto const k = *L3.begin();
+                L3.erase(k);
+                if (blacklist.find({i,j,k}) == blacklist.end()) {
+                    result.push_back({i,j,k});
+                    blacklistAllTupleRefs({i,j,k});
+                }
+                auto krefs = generateAllReflections3d(S2, k);
+                for(auto kref: krefs) {
+                    L3.erase(kref);
+                    vector<Point3d> y = {i,j,kref};
+                    sort(y.begin(), y.end());
+                    blacklistAllTupleRefs({y[0], y[1], y[2]});
+                }
+            }
+
+            auto jrefs = generateAllReflections3d(S1, j);
+            for(auto jref: jrefs) {
+                L2.erase(jref);
+            }
+        }
+
+        auto irefs = generateAllReflections3d(axes, i);
+        for(auto iref: irefs) {
+            L1.erase(iref);
+        }
+    }
+
+    return result;
+}
+
 vector<tuple<Point2d,Point2d,Point2d,Point2d>> generate4Tuple2d(
     const vector<Point2d> &points,
     const vector<Line2d> &axes
@@ -345,6 +454,139 @@ vector<tuple<Point2d,Point2d,Point2d,Point2d>> generate4Tuple2d(
     return result;
 }
 
+vector<tuple<Point3d,Point3d,Point3d,Point3d>> generate4Tuple3d(
+    const vector<Point3d> &points,
+    const vector<Plane3d> &axes
+){
+    vector<tuple<Point3d,Point3d,Point3d,Point3d>> result;
+    set<Point3d> L1(points.begin(), points.end());
+    vector<Plane3d> S1, S2, S3;
+    set<tuple<Point3d,Point3d,Point3d,Point3d>> blacklist;
+
+    auto isSelfReflection = [](const Plane3d &axis, const set<Point3d> &s) -> bool {
+        set<Point3d> r;
+        for(auto &p: s) {
+            auto ref = axis.reflect(p);
+            if(ref != NULL) {
+                r.insert(*ref);
+            }
+        }
+        return (s == r);
+    };
+
+    auto blacklistAllTupleRefs = [&axes, &blacklist](const tuple<Point3d,Point3d,Point3d,Point3d> &t) {
+        blacklist.insert(t);
+        map<tuple<Point3d,Point3d,Point3d,Point3d>,int> mp;
+        mp[t] = 0;
+        queue<tuple<Point3d,Point3d,Point3d,Point3d>> q;
+        q.push(t);
+        while(!q.empty()) {
+            auto pt = q.front();
+            q.pop();
+            for(auto axis: axes) {
+                auto ref1 = axis.reflect(get<0>(pt));
+                auto ref2 = axis.reflect(get<1>(pt));
+                auto ref3 = axis.reflect(get<2>(pt));
+                auto ref4 = axis.reflect(get<3>(pt));
+                if(ref1 == nullptr) continue;
+                if(ref2 == nullptr) continue;
+                if(ref3 == nullptr) continue;
+                if(ref4 == nullptr) continue;
+                vector<Point3d> refp = {*ref1,*ref2,*ref3, *ref4};
+                sort(refp.begin(), refp.end());
+                tuple<Point3d,Point3d,Point3d,Point3d> tp = {refp[0], refp[1], refp[2], refp[3]};
+                if(mp.find(tp) == mp.end()) {
+                    mp[tp] = mp[pt] + 1;
+                    if(mp[tp] < 3) {
+                        q.push(tp);
+                    }
+                    blacklist.insert(tp);
+                }
+            }
+        }
+    };
+
+    while(!L1.empty()) {
+        auto const i = *L1.begin();
+        L1.erase(i);
+        
+        S1.clear();
+        for(auto axis: axes) {
+            if (!axis.containsPoint(i)) {
+                continue;
+            }
+            S1.push_back(axis);
+        }
+        
+        auto L2 = L1;
+        
+        while(!L2.empty()) {
+            auto const j = *L2.begin();
+            L2.erase(j);
+        
+            S2.clear();
+            set<Point3d> x1 = {i,j};
+            for(auto axis: axes) {
+                if(isSelfReflection(axis, x1)) {
+                    S2.push_back(axis);
+                }
+            }
+
+            auto L3 = L2;
+
+            while(!L3.empty()) {
+                auto const k = *L3.begin();
+                L3.erase(k);
+                
+                S3.clear();
+                set<Point3d> x2 = {i,j,k};
+                for(auto axis: axes) {
+                    if(isSelfReflection(axis, x2)) {
+                        S3.push_back(axis);
+                    }
+                }
+
+                auto L4 = L3;
+
+                while(!L4.empty()) {
+                    auto const x = *L4.begin();
+                    L4.erase(x);
+
+                    if(blacklist.find({i,j,k,x}) == blacklist.end()) {
+                        result.push_back({i,j,k,x});
+                        blacklistAllTupleRefs({i,j,k,x});
+                    }
+
+                    auto xrefs = generateAllReflections3d(S3,x);
+                    for(auto xref: xrefs) {
+                        L4.erase(xref);
+                        vector<Point3d> y = {i,j,k,xref};
+                        sort(y.begin(), y.end());
+                        blacklistAllTupleRefs({y[0], y[1], y[2], y[3]});
+                    }
+                }
+
+                auto krefs = generateAllReflections3d(S2, k);
+                for(auto kref: krefs) {
+                    L3.erase(kref);
+                }
+            }
+
+            auto jrefs = generateAllReflections3d(S1, j);
+            for(auto jref: jrefs) {
+                L2.erase(jref);
+            }
+        }
+
+        auto irefs = generateAllReflections3d(axes, i);
+        for(auto iref: irefs) {
+            L1.erase(iref);
+        }
+    }
+
+    return result;
+}
+
 vector<pair<Point3d,Point3d>> generatePairs3d(
     const vector<Point3d> &points,
     const vector<Plane3d> &axes
@@ -415,6 +657,34 @@ vector<tuple<Point2d, Point2d, Point2d>> generate3Tuples(int n, int m) {
     return generate3Tuple2d(points, axes);
 }
 
+vector<tuple<Point3d, Point3d, Point3d>> generate3Tuples(int a, int b, int c) {
+    vector<Point3d> points;
+    for(int i = 0; i < a; i++) {
+        for(int j = 0; j < b; j++) {
+            for(int k = 0; k < c; k++) {
+                points.push_back(Point3d(i,j,k));
+            }
+        }
+    }
+    vector<Plane3d> axes;
+    axes.push_back(Plane3d(2,0,0,-a+1));
+    axes.push_back(Plane3d(0,2,0,-b+1));
+    axes.push_back(Plane3d(0,0,2,-c+1));
+    if(a == b) {
+        axes.push_back(Plane3d(1,-1,0,0));
+        axes.push_back(Plane3d(1,1,0,-a+1));
+    } 
+    if(b == c) {
+        axes.push_back(Plane3d(0,1,-1,0));
+        axes.push_back(Plane3d(0,1,1,-b+1));
+    }
+    if(c == a) {
+        axes.push_back(Plane3d(1,0,-1,0));
+        axes.push_back(Plane3d(1,0,1,-c+1));
+    }
+    return generate3Tuple3d(points, axes);
+}
+
 vector<tuple<Point2d, Point2d, Point2d,Point2d>> generate4Tuples(int n, int m) {
     vector<Point2d> points;
     for(int i = 0; i < n; i++) {
@@ -430,6 +700,34 @@ vector<tuple<Point2d, Point2d, Point2d,Point2d>> generate4Tuples(int n, int m) {
         axes.push_back(Line2d(1,1,-n+1));
     }
     return generate4Tuple2d(points, axes);
+}
+
+vector<tuple<Point3d, Point3d, Point3d, Point3d>> generate4Tuples(int a, int b, int c) {
+    vector<Point3d> points;
+    for(int i = 0; i < a; i++) {
+        for(int j = 0; j < b; j++) {
+            for(int k = 0; k < c; k++) {
+                points.push_back(Point3d(i,j,k));
+            }
+        }
+    }
+    vector<Plane3d> axes;
+    axes.push_back(Plane3d(2,0,0,-a+1));
+    axes.push_back(Plane3d(0,2,0,-b+1));
+    axes.push_back(Plane3d(0,0,2,-c+1));
+    if(a == b) {
+        axes.push_back(Plane3d(1,-1,0,0));
+        axes.push_back(Plane3d(1,1,0,-a+1));
+    } 
+    if(b == c) {
+        axes.push_back(Plane3d(0,1,-1,0));
+        axes.push_back(Plane3d(0,1,1,-b+1));
+    }
+    if(c == a) {
+        axes.push_back(Plane3d(1,0,-1,0));
+        axes.push_back(Plane3d(1,0,1,-c+1));
+    }
+    return generate4Tuple3d(points, axes);
 }
 
 vector<pair<Point3d,Point3d>> generatePairs(int a, int b, int c) {
